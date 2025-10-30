@@ -1,0 +1,47 @@
+1. Fedora, Debian, Kali
+
+2. man is used to preview "manual"/document for external commands given they have a manual
+
+3. rm: used to remove files/directories even if unempty
+   rmdir: Remove the DIRECTORY(ies), if they are empty
+   
+4. 
+a) rmdir: failed to remove 'dir11': Directory not empty 
+b) rmdir: failed to remove 'Oldfiles': Not a directory ... Hierarchy is the same
+c) Absolute: /home/seif/workspace/Embedded-Linux/AdminLinux_Task1/docs/mycv
+   Relative: docs/mycv
+
+5. cp passwd /home/seif/workspace/Embedded-Linux/AdminLinux_Task1
+
+6. mv passwd oldpasswd
+
+7. a) cd ~ 
+   b) cd
+   c) cd /home/seif from root
+   d) ~/workspace/Embedded-Linux/AdminLinux_Task1$ cd ../../../
+
+
+
+8. ls | grep "w"
+  
+9. it shows the type of the command, whether it's an alias, an external application or a built in command
+
+10. change, cheese
+
+11. man -k . | grep read ... commands: pread, read
+
+12. search the manual page names and descriptions
+
+
+batch file:
+#!/bin/bash
+cd workspace/Embedded-Linux/AdminLinux_Task1
+mkdir myDirectory
+cd myDirectory
+mkdir secondDirectory
+cd secondDirectory
+touch myNotePaper
+cp myNotePaper ~/workspace/Embedded-Linux/AdminLinux_Task1/myDirectory
+cd..
+mv myNotePaper myOldNotePaper
+
