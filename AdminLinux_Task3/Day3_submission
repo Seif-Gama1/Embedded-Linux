@@ -1,0 +1,67 @@
+Section1:
+
+#created scipt.sh and added following script:
+
+#!/bin/bash
+
+# Path to .bashrc
+BASHRC="$HOME/.bashrc"
+
+# Check if .bashrc exists
+if [ -f "$BASHRC" ]; then
+    echo "export HELLO=\$HOSTNAME" >> "$BASHRC"
+
+    echo "LOCAL=\$(whoami)" >> "$BASHRC"
+
+    echo "hello and local  variables added to bashrc"
+else
+    echo "bashrc not found"
+fi
+
+gnome-terminal &
+
+---------------------------------------------------------------------------
+in the new terminal:
+
+seif@Daetrex:~/workspace/Embedded-Linux/AdminLinux_Task3$ echo $HELLO
+Daetrex
+
+seif@Daetrex:~/workspace/Embedded-Linux/AdminLinux_Task3$ echo $LOCAL
+seif
+---------------------------------------------------------------------------
+
+Section2:
+
+1. ls /usr/bin > ~/workspace/Embedded-Linux/AdminLinux_Task3/redirection
+
+2. vim ~/.profile
+#add this line: "date"
+
+3. count words in file: wc -w file_name
+   count files: ls | wc -l
+
+4. 
+	a) behaves just like cat filename1 filename2 ... it shows both files and "|" does nothing
+	b) rm: missing operand, this command can't take stdin, only from arguements 
+	c) using ls /etc/passwd shows on the files name, so wc -l gives 1 (1 word)
+
+5. command: find -name ".profile" 2>/dev/null
+result: ./etc/skel/.profile
+./home/seif/.profile
+./snap/core18/2959/etc/skel/.profile
+./snap/core18/2952/etc/skel/.profile
+./snap/core20/2599/etc/skel/.profile
+./snap/core20/2669/etc/skel/.profile
+./snap/core22/2133/etc/skel/.profile
+./snap/core22/2139/etc/skel/.profile
+
+
+6.       2 /  2621441 /etc  2621605 /etc/hosts
+
+7. sudo ln -s /etc/passwd /boot/my_passwd_link
+
+8. sudo ln /etc/passwd /boot/passwd_hardlink .......... it worked for me, because both directories exist on same parition/file system
+
+9. it basically tells command to take the 1st line + next line as a single command/input
+can change it to ":" by updating PS2 value
+PS1 and PS2 are prompt strings, PS1 holds the user + hostnames while PS2 holds the special character on starting a new line for the same prompt
