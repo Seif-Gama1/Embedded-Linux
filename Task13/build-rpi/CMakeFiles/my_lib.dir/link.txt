@@ -1,0 +1,1 @@
+/home/seif/x-tools/aarch64-rpi3-linux-gnu/bin/aarch64-rpi3-linux-gnu-g++ -fPIC -shared -Wl,-soname,libmy_lib.so -o libmy_lib.so CMakeFiles/my_lib.dir/src/GPIO.cpp.o CMakeFiles/my_lib.dir/src/IOstream.cpp.o CMakeFiles/my_lib.dir/src/Istream.cpp.o CMakeFiles/my_lib.dir/src/Ostream.cpp.o CMakeFiles/my_lib.dir/src/Stream.cpp.o CMakeFiles/my_lib.dir/src/7segment.cpp.o 

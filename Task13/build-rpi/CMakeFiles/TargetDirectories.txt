@@ -1,0 +1,4 @@
+/home/seif/workspace/Embedded-Linux/Task13/build-rpi/CMakeFiles/my_lib.dir
+/home/seif/workspace/Embedded-Linux/Task13/build-rpi/CMakeFiles/SevenSegment.dir
+/home/seif/workspace/Embedded-Linux/Task13/build-rpi/CMakeFiles/edit_cache.dir
+/home/seif/workspace/Embedded-Linux/Task13/build-rpi/CMakeFiles/rebuild_cache.dir
