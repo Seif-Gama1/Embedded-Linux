@@ -20,7 +20,7 @@
 
 
 SevenSeg::SevenSeg()
-    : a(14), b(15), c(18), d(23), e(24), f(25), g(8)
+    : a((512+14)), b((512+15)), c((512+18)), d((512+23)), e((512+24)), f((512+25)), g((512+8))
 {
     // Configure all pins as outputs
     a.setDirection("out");
