@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.10)
+project(hello_world_service_pi)
+
+find_package(Boost REQUIRED COMPONENTS system thread filesystem)
+# We manually point to vsomeip later to avoid path confusion
+
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(/home/seif/vsomeip_build/include)
+# ADD THE PATH TO YOUR GPIO.h HERE
+include_directories(/home/seif/path_to_gpio_folder) 
+
+add_executable(hello_world_service hello_world_service_main.cpp)
+
+target_link_libraries(hello_world_service 
+    /home/seif/vsomeip_build/lib/libvsomeip3.so 
+    /home/seif/my_libs/libgpio.so
+    ${Boost_LIBRARIES} 
+    pthread
+)

@@ -1,0 +1,3 @@
+/home/seif/workspace/C++labs/vsomeip/vsomeip-3.5.5/examples/capslock_task/build_pc/CMakeFiles/hello_world_client.dir
+/home/seif/workspace/C++labs/vsomeip/vsomeip-3.5.5/examples/capslock_task/build_pc/CMakeFiles/edit_cache.dir
+/home/seif/workspace/C++labs/vsomeip/vsomeip-3.5.5/examples/capslock_task/build_pc/CMakeFiles/rebuild_cache.dir
