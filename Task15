@@ -1,0 +1,89 @@
+Question1:
+touch sd.img
+
+seif@Daetrex:~/workspace/Emb-Linux$ dd if=/dev/zero of=sd.img bs=1M count=1024
+1024+0 records in
+1024+0 records out
+1073741824 bytes (1.1 GB, 1.0 GiB) copied, 0.73902 s, 1.5 GB/s
+
+here I'm using a device driver called zero which prints @ special character infinitely ... so I use it as an input into dd command, which helps fill the file with specific size according to options used
+
+Question2:
+MBR: max size = 2TB, up to 4 partitions, can't detect corruption, header is stored at the top .. if corrupted -> ur device is damaged
+
+GPT: max size = 8ZiB, up to 128 partitions, can detect corruption using CRC, header is stored at beginning and a back up copy at end of disk, GPT internally uses MBR ... to prevent only MBR systems from seeing this device as empty
+
+Question3:
+Partition scheme (MBR/GPT) defines where partitions exist
+File system defines how data inside a partition is structured
+FAT16 (File allocation table - 16 bit cluster addressing): No journaling feature, max file size = 2GB, max FS size = 2GB, low crash safety, universal
+FAT32 (32 bit cluster addressing): No journaling feature, max file size = 4GB, max FS = 2TB, low crash safety, universal
+EXT4 (Fourth Extended): Provides journaling (logging for steps taken), max file size = 16TB, max FS = 1EB, Higher crash safety, Linux native
+
+Question4:
+cfdisk sd.img
+Disk: sd.img
+                 Size: 1 GiB, 1073741824 bytes, 2097152 sectors
+                       Label: dos, identifier: 0xf3367f7a
+
+    Device        Boot        Start        End    Sectors    Size   Id Type
+    sd.img1       *            2048     411647     409600    200M    6 FAT16
+    sd.img2                  411648    2097151    1685504    823M   83 Linux
+
+Question5:
+Loop device allows a regular file to be treated as a block device
+used by linux to build OS images, used by snap and disk image tools, can be used to create virtual disks (like sd card/flash), test filesystem
+
+5.a to create loop device: losetup -f --partscan --show sd.img
+
+5.b to show all loop devices in use: lsblk
+
+5.c to detach: losetup -d /dev/loopx
+
+Question6:
+using cat /sys/module/loop/parameters/max_loop
+
+Question7:
+yes, rather than limiting to max_loop the kernel noww allows creation of more loop devices
+using a device called loop-control
+
+sudo modprobe -r loop
+sudo modprobe loop max_loop=64
+
+real limitaion on number of max_loop now is kernel memory
+
+Question8:
+loop32        7:32   0     1G  0 loop 
+├─loop32p1  259:14   0   200M  0 part 
+└─loop32p2  259:15   0   823M  0 part 
+
+Question9:
+sudo mkfs.vfat -F 16 -n boot /dev/loop32p1 -> make loop32p1 have FS FAT16 and called boot
+sudo mkfs.ext4 -L rootfs /dev/loop32p2 -> make loop32p2 have FS EXT4 and called rootfs
+
+loop32
+│                                                                           
+├─loop32p1
+│    vfat   FAT16 boot  82BA-2D9A                                           
+└─loop32p2
+     ext4   1.0   rootfs
+                        b520f17f-3cb7-4d3d-90d1-bc4eaf995f56 
+
+Question10:
+mount is used to attach a filesystem to the linux directory tree, it sort of links or makes the filesystem visible under a directory of my choice, for easier access ... I've allocated the 1GB now I want to treat it as a FS and create files as I want U-boot, start.elf and so on
+
+unmount is used to deattach a filesystem from linux directory tree
+
+Question11:
+block devices: it's any hardware or kernel interface that stores data in fixed size blocks allowing random access to any block on the device
+
+character devices: it's any device that represents any hardware or kernel interface that streams data sequentially byte by byte
+
+Question12:
+loop32
+│                                                                           
+├─loop32p1
+│    vfat   FAT16 boot  82BA-2D9A                             199.8M     0% /mnt/boot
+└─loop32p2
+     ext4   1.0   rootfs
+                        b520f17f-3cb7-4d3d-90d1-bc4eaf995f56  735.3M     0% /mnt/rootfs
