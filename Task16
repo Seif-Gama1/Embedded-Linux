@@ -1,0 +1,139 @@
+Part A: U-Boot Build and Deployment
+
+1- Define what you Know about the bootloader? It's a low level trusted program executed immediately after the processor reset
+	a) initializes HW (DRAM, clocks, uart)
+	b) Configures memory controller
+	c) Loads kernel into RAM
+	d) pass boot parameters like DTB
+	e) Jumps to Image
+2- Draw and Explain the exact boot chain on Raspberry Pi from power-on until you see the U-Boot prompt.
+boot chain: (it uses GPU-first boot flow) BootROM -> bootcode.bin -> start.elf -> U-boot -> Kernel
+	a) BootROM: runs on the GPU, basic init HW (DRAM) then try to find filename "bootcode.bin" from bootable partition and load it into GPU memory
+	b) bootcode.bin: it initalizes RPI HW (full DRAM init), sets up memory controller, then loads start.elf
+	c) start.elf: main bootloader also runs on GPU, parses configuration from config.txt, allocates RAM between GPU and CPU loads U-boot if exist, otherwise kernel
+	d) U-boot: initalizes ARM side HW, loads kernel, loads dtb, executes arm booting sequence
+	e) kernel: mounts root filesystem then starts init process
+
+PC: Power on -> bootROM -> bios -> GRUB -> kernel -> init process
+
+3- What is the difference between U-Boot and GRUB ?
+U-Boot: for embedded boards, basic file system, low level HW init, No GUI
+GRUB: for x86 architecture, supports advanced file system, no HW init, offers GUI
+
+4- What files must be placed in the Raspberry Pi boot partition to boot U-Boot, and define what is the important of each of them?
+	a) bootcode.bin: it's extremely small and can't initialize full DRAM, without bootcode.bin the boot process stops immediately
+	b) start.elf: this is the real firmware of the Rbpi, controls the entire early boot process before arm CPU starts exeuction
+	c)config.txt: without it the firmware would try to boot hte Linux kernel directly instead of u-boot
+	d) fixup.dat: used by start.elf, adjusts mem layout, applies mem fixups based on GPU memory split, ensures correct RAM layout between GPU and CPU
+	e) u-boot.bin: this is the actual BL u built, it takes control after GPU firmware finishes
+	f) .dtb file: linux kernel doesn't hardcode board HW, it relies on the DTB for HW discovery and peripheral init, without it the kernel can't initialize peripherals
+	g) Image: it initializes drivers, mounts root filesystem, starts init process
+
+5- Build and Test Custom U-Boot in QEMU (Cortex-A9):
+a. Build U-Boot , Customize U-Boot via menuconfig, and Explain the steps you
+make to configuration.
+commands:
+git clone https://source.denx.de/u-boot/u-boot.git
+cd u-boot
+make vexpress_ca9x4_defconfig -> apply configurations specific to Cortex A9
+make menuconfig
+then use: make -j
+
+b. Run U-Boot in QEMU, and Explain the command you use.
+qemu-system-arm -M vexpress-a9 -kernel u-boot -nographic -sd ../sd.img
+-M vexpress-a9: to choose cortex A9
+-kernel u-boot: to choose u-boot binary
+-nographic: no graphic display, we're not using hdmi
+-sd ../sd.img: specify my own mmc port
+
+6- Build and Deploy U-Boot on Real Raspberry Pi 3B+ (AArch64)
+a. Build U-Boot , Customize U-Boot via menuconfig, and Explain the steps you make to configuration.
+
+COMMANDS:
+export CROSS_COMPILE=aarch64-linux-gnu- -> use appropriate cross compiler
+make rpi_3_b_plus_defconfig -> add configs for rpbi 3b+
+make -> build
+qemu-system-aarch64 -M ? | grep ras -> find the right board name
+qemu-system-aarch64 -M raspi3b -kernel u-boot -nographic
+make menuconfig
+qemu-system-aarch64 -M raspi3b -kernel u-boot -nographic
+
+7- Which file provides the hardware description to U-Boot on the Raspberry Pi 3B+ and at which stage is it loaded?
+the .dtb file, Loaded by U-Boot ... Passed to the Linux kernel during boot (booti command)
+
+8- After losetup --partscan --show -f sd.img we get devices like /dev/loop5p1 and /dev/loop5p2. Explain how the Linux kernel knows where the partitions start inside the image file.
+by reading the MBR section, kernel is able to parse the parition table, and for each parition gets the start sector and nubmer of sectors, hence it can create /dev/loop5p1, /dev/loop5p2
+
+
+Part B: U-Boot Commands Environment 
+1- What is the using of “bdinfo” command? 
+Shows Board information in U-Boot
+including: CPU type, DRAM start address & size, Flash / memory layout, U-Boot version
+
+2- What is the using of “printenv” command?
+print all u-boot environment variables
+
+3- What is the DRAM start address?
+0x40000000
+
+4- List and Load Files from FAT Partition.
+to list: fatls mmc 0:1
+to load: fatload mmc 0:1 0x80000 FILE_NAME
+
+5- Make the U-Boot banner say “Welcome to Our-Boot – Intake 46”
+make menuconfig
+General setup  →  Show startup banner
+Welcome to Our-Boot – Intake 46
+make -j
+
+6- Add a custom command hello that prints your name
+setenv hello 'Seif'
+saveenv
+run hello
+OR
+#include <common.h>
+#include <command.h>
+
+int do_hello(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]){
+    printf("Hello, Seif!\n");  // Uses U-Boot's internal printf
+    return 0;
+}
+U_BOOT_CMD(
+    hello, 1, 0, do_hello,
+    "Prints my name",
+    ""
+);
+
+7- Network Booting with TFTP
+a. Set Up a TFTP Server on Your Laptop
+sudo mkdir -p /srv/tftp
+sudo chown nobody:nogroup /srv/tftp
+# copy DTB and linux img into /srv/tftp
+sudo systemctl restart tftpd-hpa
+tftp localhost
+tftp> get Image
+tftp> quit
+
+b. From U-Boot (QEMU or Real RPi) Configure Network & Test
+COMMANDS:
+qemu-system-arm -M vexpressa9 -m 512M -kernel u-boot -sd ../sd.img -dtb arch/arm/dts/vexpress_v2p_ca9.dtb -nographic -nic tap -net nic
+setenv ipaddr 192.168.1.100
+setenv serverip 192.168.1.50
+setenv netmask 255.255.255.0
+ping $serverip
+
+c. Load Kernel + DTB via TFTP
+COMMANDS:
+tftp 0x80000000 Image
+tftp 0x81000000 vexpress-v2p-ca9.dtb
+booti 0x80000000 - 0x81000000
+
+8- What is the difference between run and go commands?
+run: used to execture the command stored in u-boot env variable
+go: jumps to address in RAM and execute code directly
+
+9- What is the purpose of bootargs and who reads it?
+they are kernel command line arguements, which tells kernel how to start up, it's read by kernel before init process runs to configure its behavior. it helps define console device and root filesystem
+
+10- Why do we use 0x62000000 and not 0x60000000 for kernel address on Raspberry Pi?
+because U-boot, DTB are typically sitting at 0x60000000, so we choose 0x62000000 to avoid overlapping with them. Thus we ensure the kernel has a contiguous memory region for use
