@@ -1,0 +1,98 @@
+#!/bin/sh
+
+# 1. Mount Virtual Filesystems
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs dev /dev
+
+echo "============================================"
+echo "   Initramfs: Root Filesystem Selector"
+echo "============================================"
+
+DEV_ROOT1="/dev/sda2"
+DEV_ROOT2="/dev/sda3"
+
+echo "Current devices:"
+ls /dev
+
+echo "============================================"
+echo "Loading modules..."
+echo "============================================"
+
+insmod /lib/modules/usbcore.ko || echo "usbcore failed"
+insmod /lib/modules/scsi_mod.ko || echo "scsi_mod failed"
+insmod /lib/modules/usb-storage.ko || echo "usb-storage failed"
+insmod /lib/modules/sd_mod.ko || echo "sd_mod failed"
+
+echo "============================================"
+echo "Done loading modules"
+echo "============================================"
+
+
+ls lib/modules/
+
+dmesg | tail -n 30
+
+# 2. Wait for USB Device Detection
+echo "Waiting for storage device to settle..."
+while [ ! -b "$DEV_ROOT1" ] || [ ! -b "$DEV_ROOT2" ]; do
+    echo "Polling for $DEV_ROOT1 and $DEV_ROOT2..."
+    sleep 1
+done
+
+echo "Devices detected: $DEV_ROOT1 and $DEV_ROOT2"
+
+# 3. User Selection Prompt
+echo ""
+echo "Select Root Filesystem Partition:"
+echo "1) $DEV_ROOT1 (RootFS 1)"
+echo "2) $DEV_ROOT2 (RootFS 2)"
+echo -n "Enter choice [1/2]: "
+
+read choice
+
+case $choice in
+    1) ROOT_DEV=$DEV_ROOT1 ;;
+    2) ROOT_DEV=$DEV_ROOT2 ;;
+    *) 
+        echo "Invalid input. Defaulting to RootFS 1."
+        ROOT_DEV=$DEV_ROOT1
+        ;;
+esac
+
+# 4. Mount Selected Partition
+echo "Mounting $ROOT_DEV to /mnt/root..."
+
+mkdir -p /mnt/root
+
+if mount -t ext4 $ROOT_DEV /mnt/root; then
+    echo "Mount successful."
+else
+    echo "FATAL: Failed to mount $ROOT_DEV. Dropping to shell."
+    exec /bin/sh
+fi
+
+# 5. Switch Root
+echo "Switching root to $ROOT_DEV..."
+
+ls /mnt/root
+
+# Clean up virtual filesystems
+umount /proc
+umount /sys
+
+# Move /dev to new root (Prevents the "can't open /dev/ttyS0" error)
+if [ -d /mnt/root/dev ]; then
+    mount --move /dev /mnt/root/dev
+    echo "/dev moved to new root."
+else
+    umount /dev
+    echo "Warning: /dev does not exist in new root. Continuing without moving /dev."
+fi
+
+# Switch to new root
+exec switch_root /mnt/root /init
+
+# Fallback
+echo "FATAL: switch_root failed. Dropping to shell."
+exec /bin/sh

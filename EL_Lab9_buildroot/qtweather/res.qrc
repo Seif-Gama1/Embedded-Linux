@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>air.png</file>
+        <file>fog.png</file>
+        <file>heavy-rain.png</file>
+        <file>humidity.png</file>
+        <file>rainy.png</file>
+        <file>windy.png</file>
+        <file>background.jpg</file>
+    </qresource>
+</RCC>
